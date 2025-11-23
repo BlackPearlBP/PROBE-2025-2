@@ -28,16 +28,26 @@ public class ProductsController {
         this.productsServices = productsServices;
     }
 
-    // Retorna todos os produtos, com filtros opcionais por marca e tipo
+    // Retorna todos os produtos, com filtros opcionais por marca
     @GetMapping
     public ResponseEntity<List<Products>> getAllProducts(
-            @RequestParam(required = false) String brand,
-            @RequestParam(required = false) String type) {
-        List<Products> products = productsServices.getAllProducts(brand, type);
-        if (products.isEmpty()) {
+            @RequestParam(required = false) String brand) {
+
+        // Sempre retorna todos os produtos inicialmente, após isso aplica o filtro, caso existam
+        List<Products> products = productsServices.getAllProducts(null, null);
+
+        java.util.stream.Stream<Products> stream = products.stream();
+
+        if (brand != null && !brand.isEmpty()) {
+            stream = stream.filter(p -> p.getBrand() != null && brand.equalsIgnoreCase(String.valueOf(p.getBrand())));
+        }
+
+        List<Products> filtered = stream.collect(java.util.stream.Collectors.toList());
+
+        if (filtered.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
-        return new ResponseEntity<>(products, HttpStatus.OK);
+        return new ResponseEntity<>(filtered, HttpStatus.OK);
     }
 
     // Retorna um produto pelo nome
